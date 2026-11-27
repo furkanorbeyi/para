@@ -1,11 +1,11 @@
 /**
- * ClauseMesh — Open Agentic Web Client-Side Browser Runtime
- * Loads declarative /agent-manifest.json, /agent-network.json, and /.well-known/agent-facts.json
- * Executes the 4-agent DAG in-browser using either:
- *   (A) BYOK OpenAI-compatible LLM endpoint (Mozilla Otari, OpenRouter, OpenAI, Custom)
- *   (B) Deterministic Local Multi-Agent Risk Engine (Zero-Key Instant Mode)
- *
- * Exposes `window.OpenAgenticWeb` for external browser agents & WebMCP interoperability.
+ * ClauseMesh — Worldwide Agentic Web MVP Profile 0.3 Browser Runtime
+ * Conforms to Cognizant AI Lab MVP Profile 0.3:
+ *  - Loads & validates /agent-manifest.json (networks[].front_man, hocon, peer_policy)
+ *  - Loads & validates Neuro SAN portable JSON (/clausemesh.network.json) & /links.json
+ *  - Enforces bounded execution & deny-by-default sly_data private context
+ *  - Supports BYOK OpenAI-compatible inference + zero-key deterministic local engine
+ *  - Implements Section 3.2 Peer Agent Site Loader with explicit user origin consent
  */
 (function (global) {
   "use strict";
@@ -119,11 +119,40 @@
     return (start > 0 ? "..." : "") + text.slice(start, end).replace(/\s+/g, " ").trim() + (end < text.length ? "..." : "");
   }
 
+  /**
+   * Section 3.1: Parse and validate Neuro SAN portable network JSON before execution.
+   */
+  function validateNeuroSanNetwork(networkDoc, expectedFrontMan) {
+    if (!networkDoc || !Array.isArray(networkDoc.tools) || networkDoc.tools.length === 0) {
+      throw new Error("Invalid Neuro SAN network: missing non-empty 'tools' array.");
+    }
+    const names = new Set();
+    for (const tool of networkDoc.tools) {
+      if (!tool.name || typeof tool.name !== "string") {
+        throw new Error("Invalid agent definition: missing 'name'.");
+      }
+      if (names.has(tool.name)) {
+        throw new Error(`Duplicate agent name detected: '${tool.name}'.`);
+      }
+      names.add(tool.name);
+    }
+    if (expectedFrontMan && !names.has(expectedFrontMan)) {
+      throw new Error(`Manifest front_man '${expectedFrontMan}' not found in network tools.`);
+    }
+    for (const tool of networkDoc.tools) {
+      for (const ref of tool.tools || []) {
+        if (typeof ref === "string" && !ref.startsWith("http://") && !ref.startsWith("https://")) {
+          if (!names.has(ref)) {
+            throw new Error(`Broken internal reference '${ref}' in agent '${tool.name}'.`);
+          }
+        }
+      }
+    }
+    return { valid: true, agent_count: names.size, front_man: expectedFrontMan || networkDoc.tools[0].name };
+  }
+
   function runLocalIntake(contractText, role) {
-    const lines = contractText
-      .split(/\n+/)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 15);
+    const lines = contractText.split(/\n+/).map((l) => l.trim()).filter((l) => l.length > 15);
     const wordCount = contractText.trim().split(/\s+/).filter(Boolean).length;
     const moneyMatches = contractText.match(/(\$|€|£|USD|EUR)\s?[0-9][0-9,.]*/gi) || [];
     const docType = /lease|landlord|tenant|premises/i.test(contractText)
@@ -140,32 +169,13 @@
     };
   }
 
-  function runLocalLegal(contractText) {
+  function runRuleScan(contractText, rules, category) {
     const findings = [];
-    for (const rule of LEGAL_RULES) {
+    for (const rule of rules) {
       if (rule.pattern.test(contractText)) {
         findings.push({
           id: rule.id,
-          category: "LEGAL",
-          title: rule.title,
-          severity: rule.severity,
-          weight: rule.weight,
-          snippet: extractSnippet(contractText, rule.pattern),
-          explanation: rule.explanation,
-          counter_clause: rule.counter
-        });
-      }
-    }
-    return findings;
-  }
-
-  function runLocalFinancial(contractText) {
-    const findings = [];
-    for (const rule of FINANCIAL_RULES) {
-      if (rule.pattern.test(contractText)) {
-        findings.push({
-          id: rule.id,
-          category: "FINANCIAL",
+          category,
           title: rule.title,
           severity: rule.severity,
           weight: rule.weight,
@@ -218,9 +228,7 @@
         ]
       })
     });
-    if (!resp.ok) {
-      throw new Error(`BYOK LLM HTTP ${resp.status}`);
-    }
+    if (!resp.ok) throw new Error(`BYOK LLM HTTP ${resp.status}`);
     const data = await resp.json();
     return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
   }
@@ -229,19 +237,87 @@
     constructor() {
       this.manifest = null;
       this.network = null;
+      this.links = null;
       this.agentFacts = null;
+      this.validation = null;
+      this.limits = { maxAgentInvocations: 12, maxHopDepth: 2, timeoutMs: 25000 };
     }
 
     async init() {
-      const [m, n, f] = await Promise.all([
-        fetch("./agent-manifest.json").then((r) => r.json()),
-        fetch("./agent-network.json").then((r) => r.json()),
-        fetch("./.well-known/agent-facts.json").then((r) => r.json())
+      const manifest = await fetch("./agent-manifest.json").then((r) => {
+        if (!r.ok) throw new Error(`agent-manifest.json HTTP ${r.status}`);
+        return r.json();
+      });
+      const entry = (manifest.networks || [])[0];
+      if (!entry || !entry.hocon || !entry.front_man) {
+        throw new Error("Invalid agent-manifest.json: networks[0] requires name, front_man, and hocon.");
+      }
+
+      const [network, links, facts] = await Promise.all([
+        fetch(entry.hocon).then((r) => r.json()),
+        fetch(manifest.links || "./links.json").then((r) => r.json()),
+        fetch(manifest.agent_facts || "./.well-known/agent-facts.json").then((r) => r.json())
       ]);
-      this.manifest = m;
-      this.network = n;
-      this.agentFacts = f;
-      return { manifest: m, network: n, agentFacts: f };
+
+      this.validation = validateNeuroSanNetwork(network, entry.front_man);
+      this.manifest = manifest;
+      this.network = network;
+      this.links = links;
+      this.agentFacts = facts;
+      return { manifest, network, links, agentFacts: facts, validation: this.validation };
+    }
+
+    /**
+     * Section 3.2: Protocol for Loading a Peer Agent Site (with explicit origin consent).
+     * Example peerUrl: https://furkanorbeyi.github.io/para/clausemesh
+     */
+    async loadPeerNetwork(peerUrl, requestConsent) {
+      const parsed = new URL(peerUrl);
+      if (parsed.protocol !== "https:" && parsed.hostname !== "localhost" && parsed.hostname !== "127.0.0.1") {
+        throw new Error("MVP Profile 0.3 requires HTTPS for external peer agent sites.");
+      }
+      const segments = parsed.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+      if (segments.length === 0) {
+        throw new Error("Peer URL must end with the published network name (e.g. https://site.example/network_name).");
+      }
+      const requestedName = segments.pop();
+      const baseUrl = `${parsed.origin}/${segments.length ? segments.join("/") + "/" : ""}`;
+      const manifestUrl = `${baseUrl}agent-manifest.json`;
+
+      const approved =
+        typeof requestConsent === "function"
+          ? await requestConsent({ origin: parsed.origin, manifestUrl, requestedName })
+          : false;
+      if (!approved) {
+        throw new Error("User declined cross-origin consent for peer agent site.");
+      }
+
+      const peerManifest = await fetch(manifestUrl, { mode: "cors" }).then((r) => {
+        if (!r.ok) throw new Error(`Peer manifest HTTP ${r.status}`);
+        return r.json();
+      });
+
+      const match = (peerManifest.networks || []).find((n) => n.name === requestedName);
+      if (!match) {
+        throw new Error(`Exact network '${requestedName}' not found in peer agent-manifest.json (fail-closed per Section 3.2).`);
+      }
+
+      const hoconUrl = new URL(match.hocon, baseUrl).toString();
+      const peerNetwork = await fetch(hoconUrl, { mode: "cors" }).then((r) => {
+        if (!r.ok) throw new Error(`Peer network HTTP ${r.status}`);
+        return r.json();
+      });
+
+      const validation = validateNeuroSanNetwork(peerNetwork, match.front_man);
+      return {
+        peer_origin: parsed.origin,
+        manifest_url: manifestUrl,
+        network_url: hoconUrl,
+        network_name: match.name,
+        front_man: match.front_man,
+        agent_count: validation.agent_count,
+        agents: peerNetwork.tools.map((t) => ({ name: t.name, description: (t.function && t.function.description) || "" }))
+      };
     }
 
     async invoke(capabilityId, input, options = {}) {
@@ -258,50 +334,59 @@
       const onEvent = typeof options.onEvent === "function" ? options.onEvent : () => {};
       const byok = options.byok && options.byok.apiKey ? options.byok : null;
       const trace = [];
+      let invocations = 0;
+
       const emit = (agentId, status, message) => {
+        if (status === "running") {
+          invocations += 1;
+          if (invocations > this.limits.maxAgentInvocations) {
+            throw new Error("Execution bound exceeded (maxAgentInvocations).");
+          }
+        }
         const entry = { ts: new Date().toISOString(), agent: agentId, status, message };
         trace.push(entry);
         onEvent(entry);
       };
 
       // Step 1: Intake Agent
-      emit("intake_agent", "running", "Segmenting clauses and identifying document structure...");
-      await sleep(260);
+      emit("intake_agent", "running", "Front agent (clausemesh_coordinator) delegated contract segmentation...");
+      await sleep(240);
       const intake = runLocalIntake(contractText, role);
-      emit("intake_agent", "done", `Identified "${intake.document_type}" (${intake.clauses_detected} sections, ${intake.word_count} words). Dispatching to Legal & Financial agents in parallel.`);
+      emit("intake_agent", "done", `Identified "${intake.document_type}" (${intake.clauses_detected} sections, ${intake.word_count} words). Passing allowed sly_data [signer_role, document_type] downstream.`);
 
       // Step 2: Parallel Legal Risk + Financial Agents
       emit("legal_risk_agent", "running", "Scanning for predatory IP, liability, termination, and non-compete traps...");
       emit("financial_agent", "running", "Auditing payment delays, hidden fees, penalties, and escalations...");
-      await sleep(380);
-      const legalFindings = runLocalLegal(contractText);
-      emit("legal_risk_agent", "done", `Found ${legalFindings.length} legal risk flag(s). Forwarding to Negotiation Agent.`);
-      await sleep(220);
-      const financialFindings = runLocalFinancial(contractText);
-      emit("financial_agent", "done", `Found ${financialFindings.length} financial exposure item(s). Forwarding to Negotiation Agent.`);
+      await sleep(360);
+      const legalFindings = runRuleScan(contractText, LEGAL_RULES, "LEGAL");
+      emit("legal_risk_agent", "done", `Found ${legalFindings.length} legal risk flag(s). Forwarding to negotiation_agent.`);
+      await sleep(200);
+      const financialFindings = runRuleScan(contractText, FINANCIAL_RULES, "FINANCIAL");
+      emit("financial_agent", "done", `Found ${financialFindings.length} financial exposure item(s). Forwarding to negotiation_agent.`);
 
       // Step 3: Negotiation & Synthesis Agent (optional BYOK LLM enhancement)
-      emit("negotiation_agent", "running", byok ? "Synthesizing findings via BYOK LLM router..." : "Synthesizing overall risk score and drafting fair counter-clauses...");
-      await sleep(320);
+      emit("negotiation_agent", "running", byok ? "Synthesizing findings via visitor BYOK LLM router..." : "Synthesizing overall risk score and drafting fair counter-clauses...");
+      await sleep(300);
       const synthesis = runLocalNegotiation(intake, legalFindings, financialFindings);
 
       let llmEnhancement = null;
       if (byok) {
         try {
-          const negNode = this.network.nodes.find((n) => n.id === "negotiation_agent");
+          const negNode = this.network.tools.find((t) => t.name === "negotiation_agent");
           const prompt = `Signer role: ${role}\nDocument type: ${intake.document_type}\nDetected issues: ${JSON.stringify([...legalFindings, ...financialFindings].map((x) => x.title))}\nContract excerpt:\n${contractText.slice(0, 3500)}\n\nProvide a concise 3-bullet executive negotiation memo in English.`;
-          llmEnhancement = await callBYOK(byok, negNode.system_prompt, prompt);
-          emit("negotiation_agent", "done", "BYOK LLM negotiation memo completed.");
+          llmEnhancement = await callBYOK(byok, negNode.instructions, prompt);
+          emit("negotiation_agent", "done", "BYOK LLM negotiation memo completed (key stayed in browser, sent only to selected router).");
         } catch (err) {
-          emit("negotiation_agent", "done", `BYOK endpoint fallback (${err.message}); using local deterministic synthesis.`);
+          emit("negotiation_agent", "done", `BYOK endpoint fallback (${err.message}); completed with local deterministic synthesis.`);
         }
       } else {
         emit("negotiation_agent", "done", `Audit complete. Risk score: ${synthesis.overall_risk_score}/100 (${synthesis.risk_level}).`);
       }
 
       return {
-        protocol: "open-agentic-web/0.1.0",
-        network_id: this.network.network_id,
+        protocol: "worldwide-agentic-web-mvp/0.3",
+        network_id: this.network.metadata.name,
+        front_man: this.validation.front_man,
         execution_mode: byok && llmEnhancement ? "byok-hybrid" : "browser-local-deterministic",
         intake,
         overall_risk_score: synthesis.overall_risk_score,

@@ -1,7 +1,5 @@
 /**
- * ClauseMesh UI Controller
- * Wires the browser UI to `window.OpenAgenticWeb` runtime, animates the 4-agent SVG DAG,
- * displays live traces, and supports Markdown/JSON audit export.
+ * ClauseMesh UI Controller (Worldwide Agentic Web MVP Profile 0.3)
  */
 (function () {
   "use strict";
@@ -46,7 +44,10 @@
     specViewer: document.getElementById("specViewer"),
     byokEndpoint: document.getElementById("byokEndpoint"),
     byokModel: document.getElementById("byokModel"),
-    byokKey: document.getElementById("byokKey")
+    byokKey: document.getElementById("byokKey"),
+    peerUrlInput: document.getElementById("peerUrlInput"),
+    loadPeerBtn: document.getElementById("loadPeerBtn"),
+    peerResult: document.getElementById("peerResult")
   };
 
   let lastResult = null;
@@ -112,12 +113,10 @@
     }
 
     const allFindings = [...res.red_flags, ...res.financial_findings];
-    if (allFindings.length === 0) {
-      els.findingsList.innerHTML = `<div class="finding" style="border-left-color:#34d399;">No critical red flags triggered.</div>`;
-    } else {
-      els.findingsList.innerHTML = allFindings
-        .map(
-          (f) => `
+    els.findingsList.innerHTML = allFindings.length
+      ? allFindings
+          .map(
+            (f) => `
           <div class="finding ${escapeHtml(f.severity)}">
             <div class="finding-head">
               <strong>${escapeHtml(f.title)}</strong>
@@ -129,16 +128,14 @@
             <div style="font-size:12.5px; color:#c8d6ee; margin-top:5px;">${escapeHtml(f.explanation)}</div>
             ${f.snippet ? `<div style="font-size:11.5px; color:#8ea0c0; margin-top:5px; font-style:italic;">"${escapeHtml(f.snippet)}"</div>` : ""}
           </div>`
-        )
-        .join("");
-    }
+          )
+          .join("")
+      : `<div class="finding" style="border-left-color:#34d399;">No critical red flags triggered.</div>`;
 
-    if (res.counter_clauses.length === 0) {
-      els.countersList.innerHTML = `<div style="color:#8ea0c0; font-size:13px;">No counter-clauses required.</div>`;
-    } else {
-      els.countersList.innerHTML = res.counter_clauses
-        .map(
-          (c) => `
+    els.countersList.innerHTML = res.counter_clauses.length
+      ? res.counter_clauses
+          .map(
+            (c) => `
           <div class="counter-box">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <strong style="font-size:13px; color:#34d399;">Replace: ${escapeHtml(c.for_issue)}</strong>
@@ -146,9 +143,9 @@
             </div>
             <code>${escapeHtml(c.suggested_text)}</code>
           </div>`
-        )
-        .join("");
-    }
+          )
+          .join("")
+      : `<div style="color:#8ea0c0; font-size:13px;">No counter-clauses required.</div>`;
   }
 
   function downloadFile(filename, content, mime) {
@@ -164,9 +161,10 @@
   function toMarkdown(res) {
     const lines = [
       `# ClauseMesh Multi-Agent Contract Audit`,
+      `- **Protocol:** ${res.protocol}`,
+      `- **Front Agent:** ${res.front_man}`,
       `- **Document Type:** ${res.intake.document_type}`,
       `- **Risk Score:** ${res.overall_risk_score}/100 (${res.risk_level})`,
-      `- **Execution Mode:** ${res.execution_mode}`,
       "",
       `## Executive Summary`,
       res.executive_summary,
@@ -183,14 +181,11 @@
     return lines.join("\n");
   }
 
-  // Event bindings
   document.querySelectorAll(".btn-chip").forEach((btn) => {
     btn.addEventListener("click", () => {
       const key = btn.getAttribute("data-sample");
       els.contractInput.value = SAMPLES[key] || "";
-      if (key === "lease") els.roleSelect.value = "tenant";
-      else if (key === "saas") els.roleSelect.value = "consumer";
-      else els.roleSelect.value = "freelancer";
+      els.roleSelect.value = key === "lease" ? "tenant" : key === "saas" ? "consumer" : "freelancer";
     });
   });
 
@@ -249,6 +244,22 @@
     }
   });
 
+  els.loadPeerBtn.addEventListener("click", async () => {
+    const url = els.peerUrlInput.value.trim();
+    els.peerResult.classList.remove("hidden");
+    els.peerResult.textContent = "Requesting origin consent...";
+    try {
+      const info = await window.OpenAgenticWeb.loadPeerNetwork(url, async (ctx) => {
+        return window.confirm(
+          `Open Agentic Web Consent (MVP 0.3 Section 3.2)\n\nAllow ClauseMesh to contact external origin:\n${ctx.origin}\n\nTo fetch agent-manifest.json and load network '${ctx.requestedName}'?`
+        );
+      });
+      els.peerResult.textContent = JSON.stringify(info, null, 2);
+    } catch (err) {
+      els.peerResult.textContent = `Peer load stopped: ${err.message}`;
+    }
+  });
+
   els.exportMdBtn.addEventListener("click", () => {
     if (lastResult) downloadFile("clausemesh-audit.md", toMarkdown(lastResult), "text/markdown");
   });
@@ -256,21 +267,20 @@
     if (lastResult) downloadFile("clausemesh-audit.json", JSON.stringify(lastResult, null, 2), "application/json");
   });
 
-  // Boot Open Agentic Web runtime
   window.OpenAgenticWeb.init()
     .then((bundle) => {
       specBundle = {
         manifest: bundle.manifest,
         network: bundle.network,
+        links: bundle.links,
         facts: bundle.agentFacts
       };
-      els.specStatus.textContent = `Open Agentic Web v${bundle.manifest.spec_version} Ready`;
+      els.specStatus.textContent = `MVP Profile ${bundle.manifest.spec_version} Validated (${bundle.validation.agent_count} agents)`;
       els.specViewer.textContent = JSON.stringify(bundle.manifest, null, 2);
-      // Preload freelance sample for instant 1-click demo
       els.contractInput.value = SAMPLES.freelance;
     })
     .catch((err) => {
       els.specStatus.textContent = "Run via HTTP server (not file://)";
-      els.specViewer.textContent = `Load error: ${err.message}\nServe this directory via: python -m http.server 8080`;
+      els.specViewer.textContent = `Load error: ${err.message}`;
     });
 })();

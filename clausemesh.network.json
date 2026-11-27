@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "name": "clausemesh",
+    "description": "ClauseMesh 4-Agent Contract & Terms Risk Guardian conforming to Neuro SAN portable JSON schema (Worldwide Agentic Web MVP Profile 0.3).",
+    "version": "1.0.0",
+    "license": "MIT",
+    "sly_data_policy": {
+      "default": "deny",
+      "allowed_downstream_fields": ["signer_role", "document_type"]
+    }
+  },
+  "llm_config": {
+    "model_name": "gpt-4o-mini",
+    "temperature": 0.2
+  },
+  "tools": [
+    {
+      "name": "clausemesh_coordinator",
+      "function": {
+        "description": "Front agent for ClauseMesh. Coordinates contract intake, parallel legal & financial risk audits, and fair counter-clause negotiation.",
+        "parameters": {
+          "type": "object",
+          "required": ["contract_text"],
+          "properties": {
+            "contract_text": {
+              "type": "string",
+              "description": "Raw text of a contract, lease, NDA, or Terms of Service."
+            },
+            "role": {
+              "type": "string",
+              "enum": ["freelancer", "consumer", "tenant", "founder"],
+              "default": "freelancer"
+            }
+          }
+        }
+      },
+      "instructions": "You are the front_man coordinator of ClauseMesh. First invoke intake_agent to segment and classify the contract. Then delegate in parallel to legal_risk_agent and financial_agent. Finally pass all findings to negotiation_agent to compute the 0-100 risk score and draft fair counter-clauses.",
+      "tools": [
+        "intake_agent",
+        "legal_risk_agent",
+        "financial_agent",
+        "negotiation_agent"
+      ]
+    },
+    {
+      "name": "intake_agent",
+      "function": {
+        "description": "Segments raw contract text into clauses, classifies document type, and extracts monetary references."
+      },
+      "instructions": "Segment the contract into logical clauses, identify the document type (Freelance Agreement, SaaS Terms of Service, or Lease), and extract monetary amounts. Return structured JSON only.",
+      "tools": []
+    },
+    {
+      "name": "legal_risk_agent",
+      "function": {
+        "description": "Detects predatory legal traps: overbroad IP grabs, unlimited liability, broad non-competes, unilateral edits, forced arbitration, and silent auto-renewals."
+      },
+      "instructions": "Audit the segmented clauses for asymmetric legal terms that harm individuals, freelancers, or tenants. Return severity (CRITICAL/HIGH/MEDIUM), exact snippet, plain-English risk explanation, and fair counter-clause.",
+      "tools": []
+    },
+    {
+      "name": "financial_agent",
+      "function": {
+        "description": "Detects cash-flow and fee traps: Net-60/90 pay-when-paid delays, non-refundable deposits, liquidated damages, and uncapped price escalations."
+      },
+      "instructions": "Audit the contract for financial exposure, delayed payments, hidden fees, and asymmetric penalties. Return structured financial findings with severity and suggested fair terms.",
+      "tools": []
+    },
+    {
+      "name": "negotiation_agent",
+      "function": {
+        "description": "Synthesizes legal and financial findings into an overall 0-100 risk score, plain-English summary, and copy-ready fair counter-clauses."
+      },
+      "instructions": "Merge legal_risk_agent and financial_agent outputs into an overall 0-100 risk score (LOW/MODERATE/HIGH/CRITICAL), a concise executive summary, and polite, ready-to-send counter-clauses.",
+      "tools": []
+    }
+  ]
+}

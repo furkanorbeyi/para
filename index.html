@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ClauseMesh — Open Agentic Web Contract Guardian</title>
+  <title>ClauseMesh — Open Agentic Web Contract Guardian (MVP 0.3)</title>
   <link rel="manifest" href="./agent-manifest.json" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
@@ -14,18 +14,18 @@
         <div class="logo">CM</div>
         <div>
           <h1>ClauseMesh</h1>
-          <p>Open Agentic Web Multi-Agent Contract &amp; Terms Risk Guardian</p>
+          <p>Open Agentic Web (MVP Profile 0.3) • Multi-Agent Contract &amp; Terms Guardian</p>
         </div>
       </div>
       <div class="pill-bar">
-        <span class="pill ok" id="specStatus">Open Agentic Web: Loading...</span>
-        <span class="pill">4-Agent Browser Runtime</span>
+        <span class="pill ok" id="specStatus">MVP Profile 0.3: Loading...</span>
+        <span class="pill">Neuro SAN JSON</span>
         <span class="pill">Zero Backend • Privacy First</span>
       </div>
     </header>
 
     <div class="grid">
-      <!-- LEFT COLUMN: INPUT + AGENT NETWORK -->
+      <!-- LEFT COLUMN: INPUT + AGENT NETWORK + PEER CONNECTOR -->
       <div>
         <div class="card">
           <h2>
@@ -61,7 +61,7 @@
                 <input id="byokModel" type="text" placeholder="gpt-4o-mini" />
               </div>
               <div style="grid-column: 1 / -1;">
-                <label for="byokKey">API Key (Stored only in browser localStorage, never sent to any ClauseMesh server)</label>
+                <label for="byokKey">API Key (Sent ONLY to your chosen router; never leaves your browser to any ClauseMesh server)</label>
                 <input id="byokKey" type="password" placeholder="Leave empty for instant zero-key browser runtime" />
               </div>
             </div>
@@ -69,44 +69,39 @@
         </div>
 
         <div class="card">
-          <h2>2. Live Multi-Agent DAG Topology</h2>
+          <h2>2. Live Multi-Agent DAG (Neuro SAN Topology)</h2>
           <div class="graph-wrap">
             <svg class="agent-graph" viewBox="0 0 560 205" xmlns="http://www.w3.org/2000/svg">
-              <!-- Edges -->
               <path id="edge-intake-legal" class="edge-line" d="M 145 102 C 185 102, 185 48, 220 48" />
               <path id="edge-intake-fin" class="edge-line" d="M 145 102 C 185 102, 185 156, 220 156" />
               <path id="edge-legal-neg" class="edge-line" d="M 355 48 C 390 48, 390 102, 415 102" />
               <path id="edge-fin-neg" class="edge-line" d="M 355 156 C 390 156, 390 102, 415 102" />
 
-              <!-- Node 1: Intake -->
               <rect id="node-intake_agent" class="node-rect" x="15" y="72" width="130" height="60" rx="10" />
-              <text class="node-label" x="80" y="98">Intake Agent</text>
+              <text class="node-label" x="80" y="98">intake_agent</text>
               <text class="node-sub" x="80" y="116">Clause Parser</text>
 
-              <!-- Node 2: Legal -->
               <rect id="node-legal_risk_agent" class="node-rect" x="220" y="18" width="135" height="60" rx="10" />
-              <text class="node-label" x="287" y="44">Legal Risk Agent</text>
+              <text class="node-label" x="287" y="44">legal_risk_agent</text>
               <text class="node-sub" x="287" y="62">IP &amp; Liability Traps</text>
 
-              <!-- Node 3: Financial -->
               <rect id="node-financial_agent" class="node-rect" x="220" y="126" width="135" height="60" rx="10" />
-              <text class="node-label" x="287" y="152">Financial Agent</text>
+              <text class="node-label" x="287" y="152">financial_agent</text>
               <text class="node-sub" x="287" y="170">Fees &amp; Cash-Flow</text>
 
-              <!-- Node 4: Negotiation -->
               <rect id="node-negotiation_agent" class="node-rect" x="415" y="72" width="130" height="60" rx="10" />
-              <text class="node-label" x="480" y="98">Negotiation Agent</text>
-              <text class="node-sub" x="480" y="116">Score &amp; Counter-Clauses</text>
+              <text class="node-label" x="480" y="98">negotiation_agent</text>
+              <text class="node-sub" x="480" y="116">Score &amp; Counters</text>
             </svg>
           </div>
           <h2 style="margin-top:14px;">3. Inter-Agent Message Trace</h2>
           <div class="trace-list" id="traceList">
-            <div class="trace-item" style="color:#8ea0c0;">Waiting for contract input... Click "Load Sample" or paste a contract, then run the network.</div>
+            <div class="trace-item" style="color:#8ea0c0;">Waiting for contract input... Click "Run 4-Agent Network" to execute the Neuro SAN graph.</div>
           </div>
         </div>
       </div>
 
-      <!-- RIGHT COLUMN: RESULTS + OPEN AGENTIC WEB INSPECTOR -->
+      <!-- RIGHT COLUMN: RESULTS + SPEC INSPECTOR + PEER LOADER -->
       <div>
         <div class="card">
           <h2>
@@ -142,16 +137,26 @@
         </div>
 
         <div class="card">
-          <h2>5. Open Agentic Web Spec Inspector</h2>
+          <h2>5. Peer Agent Site Loader (MVP 0.3 Section 3.2)</h2>
+          <p style="font-size:12px; color:#8ea0c0; margin:0 0 8px;">
+            Connect and validate any peer Open Agentic Web site in-browser with explicit origin consent &amp; CORS verification.
+          </p>
+          <div class="controls" style="margin-top:0;">
+            <input id="peerUrlInput" type="text" value="https://furkanorbeyi.github.io/para/clausemesh" style="flex:1;" />
+            <button id="loadPeerBtn" class="btn-secondary">Inspect Peer Site</button>
+          </div>
+          <pre class="json-view hidden" id="peerResult" style="margin-top:10px; max-height:170px;"></pre>
+        </div>
+
+        <div class="card">
+          <h2>6. Open Agentic Web MVP 0.3 Artifacts</h2>
           <div class="tabs">
             <button class="tab-btn active" data-spec="manifest">agent-manifest.json</button>
-            <button class="tab-btn" data-spec="network">agent-network.json</button>
-            <button class="tab-btn" data-spec="facts">.well-known/agent-facts.json</button>
+            <button class="tab-btn" data-spec="network">clausemesh.network.json</button>
+            <button class="tab-btn" data-spec="links">links.json</button>
+            <button class="tab-btn" data-spec="facts">agent-facts.json</button>
           </div>
-          <pre class="json-view" id="specViewer">Loading Open Agentic Web artifacts...</pre>
-          <p style="font-size:12px; color:#8ea0c0; margin:8px 0 0;">
-            External browser agents can call <code>await window.OpenAgenticWeb.invoke("analyze_contract", { contract_text })</code> directly.
-          </p>
+          <pre class="json-view" id="specViewer">Loading MVP Profile 0.3 artifacts...</pre>
         </div>
       </div>
     </div>

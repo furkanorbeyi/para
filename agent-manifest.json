@@ -1,50 +1,37 @@
 {
-  "spec_version": "0.1.0",
-  "protocol": "open-agentic-web",
-  "name": "ClauseMesh",
-  "tagline": "Open Agentic Consumer & Freelancer Contract Risk Network",
-  "description": "A zero-backend, browser-native multi-agent web application that analyzes contracts, leases, and Terms of Service to surface hidden legal traps, financial exposure, and fair counter-clauses.",
-  "category": "social-good",
-  "license": "MIT",
-  "network_config": "./agent-network.json",
+  "spec_version": "0.3",
+  "protocol": "worldwide-agentic-web-mvp",
+  "site": {
+    "name": "ClauseMesh",
+    "tagline": "Open Agentic Consumer & Freelancer Contract Risk Network",
+    "description": "Zero-backend, browser-native multi-agent network conforming to Worldwide Agentic Web MVP Profile 0.3 (Neuro SAN portable JSON, BYOK router, peer-site consent loader).",
+    "license": "MIT",
+    "category": "social-good"
+  },
+  "links": "./links.json",
   "agent_facts": "./.well-known/agent-facts.json",
-  "runtime": {
-    "execution": "client-side-browser",
-    "global_api": "window.OpenAgenticWeb",
+  "llm": {
+    "default_mode": "browser-local-deterministic",
     "byok_supported": true,
-    "deterministic_fallback": true,
-    "supported_providers": [
-      "mozilla-otari",
-      "openai",
-      "openrouter",
-      "custom-openai-compatible"
+    "wire_protocol": "openai-chat-completions",
+    "recommended_routers": [
+      "https://api.openai.com/v1/chat/completions",
+      "https://openrouter.ai/api/v1/chat/completions"
     ]
   },
-  "capabilities": [
+  "peer_policy": {
+    "allow_cross_origin_peers": true,
+    "require_explicit_user_consent": true,
+    "private_context_sly_data": "deny-by-default",
+    "max_hop_depth": 2
+  },
+  "networks": [
     {
-      "id": "analyze_contract",
-      "name": "Multi-Agent Contract Risk Audit",
-      "description": "Runs a 4-agent DAG (Intake -> Legal Risk + Financial Exposure -> Negotiation) over raw contract text and returns structured red flags, risk score, and counter-clauses.",
-      "input_schema": {
-        "type": "object",
-        "required": ["contract_text"],
-        "properties": {
-          "contract_text": { "type": "string", "minLength": 40 },
-          "role": { "type": "string", "enum": ["freelancer", "consumer", "tenant", "founder"], "default": "freelancer" }
-        }
-      },
-      "output_schema": {
-        "type": "object",
-        "properties": {
-          "overall_risk_score": { "type": "number", "minimum": 0, "maximum": 100 },
-          "risk_level": { "type": "string", "enum": ["LOW", "MODERATE", "HIGH", "CRITICAL"] },
-          "clauses_detected": { "type": "integer" },
-          "red_flags": { "type": "array" },
-          "financial_findings": { "type": "array" },
-          "counter_clauses": { "type": "array" },
-          "agent_trace": { "type": "array" }
-        }
-      }
+      "name": "clausemesh",
+      "front_man": "clausemesh_coordinator",
+      "hocon": "./clausemesh.network.json",
+      "description": "4-agent contract & Terms-of-Service risk guardian (Intake -> Legal Risk + Financial Exposure -> Negotiation & Counter-Clauses).",
+      "capabilities": ["analyze_contract"]
     }
   ]
 }
