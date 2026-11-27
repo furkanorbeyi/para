@@ -65,8 +65,9 @@ body {
 .hero p { margin: 0; color: var(--muted); font-size: 15px; }
 
 /* Grid */
-.grid-2 { display: grid; grid-template-columns: 1fr 1.05fr; gap: 22px; align-items: start; }
-@media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
+.grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 22px; align-items: start; }
+.grid-2 > * { min-width: 0; }
+@media (max-width: 960px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }
 
 .card {
   background: var(--surface);
@@ -74,6 +75,8 @@ body {
   border-radius: var(--radius);
   padding: 20px;
   margin-bottom: 18px;
+  min-width: 0;
+  overflow: hidden;
 }
 .card-header {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
@@ -212,6 +215,7 @@ label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px
 .spec-tabs { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
 pre.json-view {
   background: #070b14; border: 1px solid var(--border); border-radius: 11px;
-  padding: 14px; font-size: 12px; max-height: 360px; overflow: auto; color: #b6d0f7;
+  padding: 14px; font-size: 12px; max-height: 360px; max-width: 100%;
+  overflow: auto; color: #b6d0f7; white-space: pre-wrap; word-break: break-word;
 }
 .hidden { display: none !important; }

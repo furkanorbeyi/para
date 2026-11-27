@@ -1,6 +1,8 @@
 {
   "version": 1,
   "networks": {
-    "clausemesh": {}
+    "clausemesh": {
+      "self_verifier": "https://furkanorbeyi.github.io/para/clausemesh"
+    }
   }
 }
