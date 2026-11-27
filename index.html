@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClauseMesh — Open Agentic Web Contract Guardian</title>
+  <link rel="manifest" href="./agent-manifest.json" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">CM</div>
+        <div>
+          <h1>ClauseMesh</h1>
+          <p>Open Agentic Web Multi-Agent Contract &amp; Terms Risk Guardian</p>
+        </div>
+      </div>
+      <div class="pill-bar">
+        <span class="pill ok" id="specStatus">Open Agentic Web: Loading...</span>
+        <span class="pill">4-Agent Browser Runtime</span>
+        <span class="pill">Zero Backend • Privacy First</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT COLUMN: INPUT + AGENT NETWORK -->
+      <div>
+        <div class="card">
+          <h2>
+            <span>1. Contract / Terms Input</span>
+            <span style="font-size:11px; color:#8ea0c0; text-transform:none;">Stays 100% in your browser</span>
+          </h2>
+          <div class="samples">
+            <button class="btn-chip" data-sample="freelance">Load Sample: Predatory Freelance Contract</button>
+            <button class="btn-chip" data-sample="saas">Load Sample: SaaS Terms of Service</button>
+            <button class="btn-chip" data-sample="lease">Load Sample: Residential Lease</button>
+          </div>
+          <textarea id="contractInput" placeholder="Paste any freelance contract, NDA, lease agreement, or Terms of Service here..."></textarea>
+
+          <div class="controls">
+            <select id="roleSelect" title="Your Role">
+              <option value="freelancer">Role: Freelancer / Contractor</option>
+              <option value="consumer">Role: Consumer / User</option>
+              <option value="tenant">Role: Tenant / Renter</option>
+              <option value="founder">Role: Startup Founder</option>
+            </select>
+            <button id="runBtn" class="btn-primary">Run 4-Agent Network</button>
+          </div>
+
+          <details style="margin-top:14px;">
+            <summary>Optional: BYOK LLM Router (Mozilla Otari / OpenRouter / OpenAI)</summary>
+            <div class="byok-grid">
+              <div>
+                <label for="byokEndpoint">OpenAI-Compatible Endpoint</label>
+                <input id="byokEndpoint" type="text" placeholder="https://api.openai.com/v1/chat/completions" />
+              </div>
+              <div>
+                <label for="byokModel">Model Name</label>
+                <input id="byokModel" type="text" placeholder="gpt-4o-mini" />
+              </div>
+              <div style="grid-column: 1 / -1;">
+                <label for="byokKey">API Key (Stored only in browser localStorage, never sent to any ClauseMesh server)</label>
+                <input id="byokKey" type="password" placeholder="Leave empty for instant zero-key browser runtime" />
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="card">
+          <h2>2. Live Multi-Agent DAG Topology</h2>
+          <div class="graph-wrap">
+            <svg class="agent-graph" viewBox="0 0 560 205" xmlns="http://www.w3.org/2000/svg">
+              <!-- Edges -->
+              <path id="edge-intake-legal" class="edge-line" d="M 145 102 C 185 102, 185 48, 220 48" />
+              <path id="edge-intake-fin" class="edge-line" d="M 145 102 C 185 102, 185 156, 220 156" />
+              <path id="edge-legal-neg" class="edge-line" d="M 355 48 C 390 48, 390 102, 415 102" />
+              <path id="edge-fin-neg" class="edge-line" d="M 355 156 C 390 156, 390 102, 415 102" />
+
+              <!-- Node 1: Intake -->
+              <rect id="node-intake_agent" class="node-rect" x="15" y="72" width="130" height="60" rx="10" />
+              <text class="node-label" x="80" y="98">Intake Agent</text>
+              <text class="node-sub" x="80" y="116">Clause Parser</text>
+
+              <!-- Node 2: Legal -->
+              <rect id="node-legal_risk_agent" class="node-rect" x="220" y="18" width="135" height="60" rx="10" />
+              <text class="node-label" x="287" y="44">Legal Risk Agent</text>
+              <text class="node-sub" x="287" y="62">IP &amp; Liability Traps</text>
+
+              <!-- Node 3: Financial -->
+              <rect id="node-financial_agent" class="node-rect" x="220" y="126" width="135" height="60" rx="10" />
+              <text class="node-label" x="287" y="152">Financial Agent</text>
+              <text class="node-sub" x="287" y="170">Fees &amp; Cash-Flow</text>
+
+              <!-- Node 4: Negotiation -->
+              <rect id="node-negotiation_agent" class="node-rect" x="415" y="72" width="130" height="60" rx="10" />
+              <text class="node-label" x="480" y="98">Negotiation Agent</text>
+              <text class="node-sub" x="480" y="116">Score &amp; Counter-Clauses</text>
+            </svg>
+          </div>
+          <h2 style="margin-top:14px;">3. Inter-Agent Message Trace</h2>
+          <div class="trace-list" id="traceList">
+            <div class="trace-item" style="color:#8ea0c0;">Waiting for contract input... Click "Load Sample" or paste a contract, then run the network.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: RESULTS + OPEN AGENTIC WEB INSPECTOR -->
+      <div>
+        <div class="card">
+          <h2>
+            <span>4. Multi-Agent Audit Report</span>
+            <span style="display:flex; gap:6px;">
+              <button id="exportMdBtn" class="btn-secondary hidden">Export .md</button>
+              <button id="exportJsonBtn" class="btn-secondary hidden">Export .json</button>
+            </span>
+          </h2>
+          <div id="resultsPlaceholder" style="color:#8ea0c0; font-size:13.5px; padding:12px 0;">
+            Run the 4-agent network to inspect legal red flags, financial exposure, and copy-ready fair counter-clauses.
+          </div>
+          <div id="resultsBody" class="hidden">
+            <div class="score-banner">
+              <div id="scoreCircle" class="score-circle LOW">0</div>
+              <div>
+                <div style="font-weight:700; font-size:15px;" id="riskTitle">Risk Assessment</div>
+                <div style="color:#b6c6e0; font-size:13px; margin-top:3px;" id="execSummary"></div>
+              </div>
+            </div>
+
+            <div id="llmMemoBox" class="counter-box hidden">
+              <strong style="color:#38bdf8;">BYOK LLM Negotiation Memo</strong>
+              <div id="llmMemoText" style="font-size:13px; margin-top:6px; white-space:pre-wrap;"></div>
+            </div>
+
+            <h3 style="font-size:13px; color:#8ea0c0; margin:14px 0 8px;">DETECTED RED FLAGS &amp; FINANCIAL TRAPS</h3>
+            <div id="findingsList"></div>
+
+            <h3 style="font-size:13px; color:#34d399; margin:16px 0 8px;">FAIR COUNTER-CLAUSES (READY TO SEND)</h3>
+            <div id="countersList"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>5. Open Agentic Web Spec Inspector</h2>
+          <div class="tabs">
+            <button class="tab-btn active" data-spec="manifest">agent-manifest.json</button>
+            <button class="tab-btn" data-spec="network">agent-network.json</button>
+            <button class="tab-btn" data-spec="facts">.well-known/agent-facts.json</button>
+          </div>
+          <pre class="json-view" id="specViewer">Loading Open Agentic Web artifacts...</pre>
+          <p style="font-size:12px; color:#8ea0c0; margin:8px 0 0;">
+            External browser agents can call <code>await window.OpenAgenticWeb.invoke("analyze_contract", { contract_text })</code> directly.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./runtime.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

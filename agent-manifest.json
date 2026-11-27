@@ -1,0 +1,50 @@
+{
+  "spec_version": "0.1.0",
+  "protocol": "open-agentic-web",
+  "name": "ClauseMesh",
+  "tagline": "Open Agentic Consumer & Freelancer Contract Risk Network",
+  "description": "A zero-backend, browser-native multi-agent web application that analyzes contracts, leases, and Terms of Service to surface hidden legal traps, financial exposure, and fair counter-clauses.",
+  "category": "social-good",
+  "license": "MIT",
+  "network_config": "./agent-network.json",
+  "agent_facts": "./.well-known/agent-facts.json",
+  "runtime": {
+    "execution": "client-side-browser",
+    "global_api": "window.OpenAgenticWeb",
+    "byok_supported": true,
+    "deterministic_fallback": true,
+    "supported_providers": [
+      "mozilla-otari",
+      "openai",
+      "openrouter",
+      "custom-openai-compatible"
+    ]
+  },
+  "capabilities": [
+    {
+      "id": "analyze_contract",
+      "name": "Multi-Agent Contract Risk Audit",
+      "description": "Runs a 4-agent DAG (Intake -> Legal Risk + Financial Exposure -> Negotiation) over raw contract text and returns structured red flags, risk score, and counter-clauses.",
+      "input_schema": {
+        "type": "object",
+        "required": ["contract_text"],
+        "properties": {
+          "contract_text": { "type": "string", "minLength": 40 },
+          "role": { "type": "string", "enum": ["freelancer", "consumer", "tenant", "founder"], "default": "freelancer" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "overall_risk_score": { "type": "number", "minimum": 0, "maximum": 100 },
+          "risk_level": { "type": "string", "enum": ["LOW", "MODERATE", "HIGH", "CRITICAL"] },
+          "clauses_detected": { "type": "integer" },
+          "red_flags": { "type": "array" },
+          "financial_findings": { "type": "array" },
+          "counter_clauses": { "type": "array" },
+          "agent_trace": { "type": "array" }
+        }
+      }
+    }
+  ]
+}

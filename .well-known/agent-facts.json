@@ -1,0 +1,22 @@
+{
+  "schema": "nanda-agent-facts/v0.1",
+  "agent_id": "urn:oaw:clausemesh:contract-guardian:v1",
+  "name": "ClauseMesh Contract Guardian",
+  "version": "1.0.0",
+  "provider": {
+    "name": "ClauseMesh Open Initiative",
+    "license": "MIT"
+  },
+  "trust_policy": {
+    "data_retention": "none",
+    "execution_boundary": "user-browser-only",
+    "byok_key_storage": "browser-local-only",
+    "disclaimer": "Informational risk analysis only; does not constitute formal legal representation."
+  },
+  "endpoints": {
+    "manifest": "./agent-manifest.json",
+    "network": "./agent-network.json",
+    "web_ui": "./"
+  },
+  "interoperability": ["open-agentic-web", "webmcp-compatible", "nanda-agent-facts", "openai-chat-completions-byok"]
+}
