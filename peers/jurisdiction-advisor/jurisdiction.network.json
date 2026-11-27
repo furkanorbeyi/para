@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "name": "jurisdiction_advisor",
+    "description": "Peer Open Agentic Web network that enriches contract audits with regional consumer, labor, and tenant statutory protections (US, EU, UK, TR).",
+    "version": "1.0.0",
+    "license": "MIT",
+    "sly_data_policy": {
+      "default": "deny",
+      "allowed_downstream_fields": ["language_detected", "document_type"]
+    }
+  },
+  "tools": [
+    {
+      "name": "jurisdiction_router",
+      "function": {
+        "description": "Front agent that matches the detected document type and region to applicable statutory safeguards."
+      },
+      "instructions": "Inspect the contract language and document type, then return concise, non-legal-advice statutory checklists for the relevant jurisdiction (US FTC/State, EU GDPR/Consumer Rights Directive, UK Consumer Rights Act, or Turkey TBK/KVKK).",
+      "tools": ["regional_statute_agent"]
+    },
+    {
+      "name": "regional_statute_agent",
+      "function": {
+        "description": "Supplies grounded statutory reminders for unfair terms, non-competes, and rent/fee caps."
+      },
+      "instructions": "Return 3 concise statutory rights reminders relevant to the document type and jurisdiction.",
+      "tools": []
+    }
+  ]
+}

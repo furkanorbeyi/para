@@ -2,6 +2,7 @@
   "version": 1,
   "networks": {
     "clausemesh": {
+      "jurisdiction_advisor": "https://furkanorbeyi.github.io/para/peers/jurisdiction-advisor/jurisdiction_advisor",
       "self_verifier": "https://furkanorbeyi.github.io/para/clausemesh"
     }
   }

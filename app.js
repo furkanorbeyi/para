@@ -235,9 +235,28 @@
     });
   });
 
-  els.fileUpload.addEventListener("change", (e) => {
+  els.fileUpload.addEventListener("change", async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
+    if (file.name.toLowerCase().endsWith(".pdf") && window.pdfjsLib) {
+      els.contractInput.value = `Extracting text privately from PDF (${file.name}) inside your browser...`;
+      try {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        const buf = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+        let fullText = "";
+        for (let i = 1; i <= Math.min(pdf.numPages, 20); i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          fullText += content.items.map((it) => it.str).join(" ") + "\n";
+        }
+        els.contractInput.value = fullText.trim() || "Could not extract text (scanned image PDF).";
+      } catch (err) {
+        els.contractInput.value = `PDF read error: ${err.message}`;
+      }
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => { els.contractInput.value = String(reader.result || ""); };
     reader.readAsText(file);

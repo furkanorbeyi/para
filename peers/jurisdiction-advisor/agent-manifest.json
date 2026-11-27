@@ -1,0 +1,23 @@
+{
+  "spec_version": "0.3",
+  "protocol": "worldwide-agentic-web-mvp",
+  "site": {
+    "name": "JurisdictionAdvisor Peer",
+    "tagline": "Open Agentic Web Peer Network for Regional Consumer & Contract Law Context",
+    "license": "MIT"
+  },
+  "links": "./links.json",
+  "peer_policy": {
+    "allow_cross_origin_peers": true,
+    "require_explicit_user_consent": true,
+    "private_context_sly_data": "deny-by-default"
+  },
+  "networks": [
+    {
+      "name": "jurisdiction_advisor",
+      "front_man": "jurisdiction_router",
+      "hocon": "./jurisdiction.network.json",
+      "description": "Peer agent network providing regional statutory protections (US, EU, UK, Turkey) for contract audits."
+    }
+  ]
+}

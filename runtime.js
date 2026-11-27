@@ -246,6 +246,15 @@
   }
 
   function buildNegotiationEmail(intake, allFindings) {
+    if (intake.language_detected === "TR") {
+      if (!allFindings.length) {
+        return `Merhaba,\n\nGönderdiğiniz sözleşmeyi inceledim. Genel olarak dengeli ve adil görünüyor; son tarihleri netleştirdikten sonra imzalamaya hazırım.\n\nİyi çalışmalar,`;
+      }
+      const bullets = allFindings
+        .map((f, i) => `${i + 1}. ${f.title}:\n   Önerilen adil madde: "${f.counter_clause}"`)
+        .join("\n\n");
+      return `Merhaba,\n\nGönderdiğiniz sözleşme için teşekkür ederim. İmzalamadan önce her iki tarafı da adil şekilde korumak adına aşağıdaki ${allFindings.length} maddede standart düzenleme yapabilir miyiz?\n\n${bullets}\n\nBu güncellemeler sizin için uygunsa hemen imzalayıp başlayabiliriz.\n\nİyi çalışmalar,`;
+    }
     if (!allFindings.length) {
       return `Hi,\n\nThanks for sending over the ${intake.document_type}. The terms look balanced and fair overall—I'm happy to proceed once we confirm final dates.\n\nBest regards,`;
     }
@@ -261,10 +270,18 @@
     const positiveRelief = Math.min(15, positiveSignals.length * 4);
     const score = all.length === 0 ? Math.max(5, 16 - positiveRelief) : Math.min(98, Math.max(15, rawScore - Math.floor(positiveRelief / 2)));
     const level = score >= 70 ? "CRITICAL" : score >= 45 ? "HIGH" : score >= 25 ? "MODERATE" : "LOW";
-    const summary =
-      all.length === 0
-        ? `Great news: no predatory legal or financial traps were detected in this ${intake.document_type} (${positiveSignals.length} fair-clause signal(s) found).`
-        : `Found ${all.length} risk item(s) in this ${intake.document_type} (${legalFindings.length} legal, ${financialFindings.length} financial). Overall exposure is ${level} (${score}/100). Send the ready-made negotiation email below before signing.`;
+    let summary;
+    if (intake.language_detected === "TR") {
+      summary =
+        all.length === 0
+          ? `Güzel haber: Bu sözleşmede ciddi bir hukuki veya finansal tuzak tespit edilmedi (${positiveSignals.length} güvenli madde bulundu).`
+          : `Bu sözleşmede toplam ${all.length} riskli madde tespit edildi (${legalFindings.length} hukuki, ${financialFindings.length} finansal). Risk seviyesi: ${level} (${score}/100). İmzalamadan önce aşağıdaki hazır müzakere e-postasını gönderin.`;
+    } else {
+      summary =
+        all.length === 0
+          ? `Great news: no predatory legal or financial traps were detected in this ${intake.document_type} (${positiveSignals.length} fair-clause signal(s) found).`
+          : `Found ${all.length} risk item(s) in this ${intake.document_type} (${legalFindings.length} legal, ${financialFindings.length} financial). Overall exposure is ${level} (${score}/100). Send the ready-made negotiation email below before signing.`;
+    }
 
     return {
       overall_risk_score: score,
